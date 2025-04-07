@@ -1,0 +1,505 @@
+<html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find My Room - Guwahati Hotels</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #ffffff;
+        }
+        header {
+            background-color: #333;
+            color: #ffffff;
+            padding: 20px 0;
+            text-align: center;
+        }
+        .controls {
+            text-align: center;
+            margin: 20px;
+        }
+        .hotel-list {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        .hotel-card {
+            background-color: #ff000000;
+            border: 2px solid #000000;
+            border-radius: 10px;
+            width: 70%;
+            margin: 10px 0;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            text-align: center;
+        }
+        .hotel-card img {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+        }
+        .hotel-card h3, .hotel-card p {
+            margin: 10px;
+        }
+        .hotel-card button {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background-color: #ab0e0e;
+            color: #ffffff;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .hotel-card button:hover {
+            background-color: #555;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 600px;
+            width: 90%;
+            position: relative;
+            text-align: center;
+        }
+        .modal-content img {
+            width: 100%;
+            height: auto;
+            margin-bottom: 10px;
+        }
+        .close {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 28px;
+            cursor: pointer;
+        }
+        .footer {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            padding: 15px;
+            background-color: #333;
+            color: rgb(255, 254, 254);
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo">FIND MY ROOM</div><br>
+    <div class="description"><i>Find the best hotels in Guwahati with world-class facilities and tension-free searching.</i></div>
+</header>
+
+<!-- Controls -->
+<div class="controls">
+    <input type="text" id="searchBar" onkeyup="filterHotels()" placeholder="Search for hotels...">
+    <select id="sortOptions" onchange="sortHotels()">
+        <option value=""><b>Sort By</b></option>
+        <option value="ratingAsc">Rating: Low to High</option>
+        <option value="ratingDesc">Rating: High to Low</option>
+        <option value="priceAsc">Price: Low to High</option>
+        <option value="priceDesc">Price: High to Low</option>
+    </select>
+</div>
+
+<!-- Hotel List -->
+<div class="hotel-list" id="hotelList"></div>
+
+<!-- Modal -->
+<div id="modal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h2 id="modal-title"></h2>
+        <img id="modal-image" src="" alt="Hotel Image">
+        <p id="modal-location"></p>
+        <p id="modal-stars"></p>
+        <p id="modal-price"></p>
+        <button onclick="changeSlide(-1)">&#10094; Prev</button>
+        <button onclick="changeSlide(1)">Next &#10095;</button>
+    </div>
+</div>
+
+<!-- Footer -->
+<div class="footer">And these are the best hotels in the area.</div>
+
+<script>
+    const hotels = [
+        { 
+            id: "hotel1", name: "Hotel Brahmaputra", location: "Near CANARA BANK, Six Mile, Guwahati, Assam 781022", 
+            stars: 4.4, price: 5000, description: "thie is a nice palce",
+            images: ["https://live.staticflickr.com/3798/13185084175_72a00d39cf_c.jpg?height=600",
+                "https://cf.bstatic.com/xdata/images/hotel/max1024x768/442371571.jpg?k=88adc35517e27967c32931e0e8a0220782660a66847798150b0294a09a3aa091&o=&hp=1",
+                "https://r2imghtlak.ibcdn.com/r2-mmt-htl-image/htl-imgs/201108271658161926-1b99e076-2424-4a91-9a98-d30895fa607c.jpg?&output-quality=75&downsize=520:350&crop=520:350;0,20&output-format=jpg"
+] 
+        },
+        { 
+            id: "hotel2", name: "Radisson Blu Guwahati", location: "National Highway 37, Tetelia, Guwahati, Assam 781033", 
+            stars: 4.6, price: 7000, 
+            images: ["https://static.toiimg.com/thumb/50434952/Mian-Image.jpg?width=1200&height=900",
+                "https://cf.bstatic.com/xdata/images/hotel/max1024x768/329001639.jpg?k=e9da52789502cb4de3999d78c1e08280e83ea7c491c03b0bdb79201774f8e57a&o=&hp=1",
+                "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/07/00/17/85/radisson-blu-hotel-guwahati.jpg?w=700&h=-1&s=1"
+] 
+        },
+        {
+            id: "hotel3",
+            name: "The Hotel Palacio",
+            stars: 4.1,
+            description: "An elegant and stylish property by Taj, featuring a spa, multiple dining options, and a relaxing ambiance.",
+            images: [
+                "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/28/a9/85/d6/hotel-palacio.jpg?w=700&h=-1&s=1",
+                "https://hotelpalacio.in/wp-content/uploads/2023/10/DSC2199-photoutils.com_-1024x769.jpg",
+                "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/09/fb/44/09/hotel-palacio.jpg?w=700&h=-1&s=1"]
+},
+        {
+            id: "hotel4",
+            name: "Novotel Guwahati",
+            location: "Down Town, GS Rd, Dispur, Rukmini Gaon, Guwahati, Assam 781006",
+            stars: "4.6",
+            description: "An elegant and stylish property by Taj, featuring a spa, multiple dining options, and a relaxing ambiance.",
+            images: [
+                "https://cdn0.weddingwire.in/vendor/5671/3_2/960/jpg/hotel-novotel-guwahati-gs-road-hotel-space-jfif12_15_335671-160986813636716.jpeg",
+                "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/11/38/c3/52/the-square.jpg?w=700&h=-1&s=1",
+                "https://www.kayak.co.in/rimg/himg/81/b2/22/ice-82510-62058192_3XL-614627.jpg?width=836&height=607&crop=true"
+            ]
+
+},
+        {
+            id: "hotel5",
+            name: "Vivanta Guwahati",
+            location: "Khanapara",
+            stars: "4.4",
+            description: "An elegant and stylish property by Taj, featuring a spa, multiple dining options, and a relaxing ambiance.",
+            images: [
+                "https://media-cdn.tripadvisor.com/media/photo-s/2c/21/ec/8b/facade.jpg",
+                "https://r1imghtlak.mmtcdn.com/9eaba6d2c55c11eb9d920242ac110002.jpg",
+                "https://cf.bstatic.com/xdata/images/hotel/max1024x768/563674771.jpg?k=8e6a6a11ac394ac012a8dfa578df2bba3d4812aee2ee78a4eeeb0905e75b3668&o=&hp=1"
+           ]
+
+},
+        {
+            id: "hotel6",
+            name: "The Guwahati Address",
+            location: "45/46 RG Baruah Road, Zoo Rd, Tiniali, Guwahati, Assam 781024",
+            stars: "4.4",
+            description: "An elegant and stylish property by Taj, featuring a spa, multiple dining options, and a relaxing ambiance.",
+            images: [
+                "https://theguwahatiaddress.com/wp-content/gallery/cd-demo/01.jpg",
+                "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/0d/1a/59/24/the-guwahati-address.jpg?w=700&h=-1&s=1",
+                "https://r1imghtlak.mmtcdn.com/7801187e7fdd11e6860e02bf5ac07431.jpg"
+            ]
+},  
+        {
+            id: "hotel7",
+            name: "Ginger Guwahati",
+            location: "IHM Campus VIP Road Borbari, Upper, Hengrabari, Guwahati, Assam 781036",
+            stars: "3.9",
+            description: "An elegant and stylish property by Taj, featuring a spa, multiple dining options, and a relaxing ambiance.",
+            images: [
+                "https://www.gingerhotels.com/resourcefiles/hotel-profile-listing/ginger-guwahati-hotel-th-1f.jpg?version=1292025060754",
+                "https://r1imghtlak.mmtcdn.com/cb22b5c6cf9c11ebb2be0242ac110005.jpg",
+                "https://r1imghtlak.mmtcdn.com/1738a3f0337b11e9aa5c0242ac110002.jpg"
+            ]
+},  
+        {
+            id: "hotel8",
+            name: "Hotel Grand Majesty",
+            location: "06, Hatigaon Main Rd, Opposite Namghar, Basisthpur, Guwahati, Assam 781019",
+            stars: "3.8",
+            description: "An elegant and stylish property by Taj, featuring a spa, multiple dining options, and a relaxing ambiance.",
+            images: [
+                "https://media.easemytrip.com/media/Hotel/SHL-21122145928173/RoomImage/RoomImageB0SuGR.jpg",
+                "https://content.skyscnr.com/available/1868065005/1868065005_WxH.jpg",
+                "https://images.trvl-media.com/lodging/96000000/95800000/95795100/95795014/020541a1.jpg?impolicy=resizecrop&rw=575&rh=575&ra=fill"
+            ]
+},  
+        {
+            id: "hotel9",
+            name: "The Lily Hotel",
+            location: "G.S. Road, Six Mile, opp. Directorate of Agriculture Office, Khanapara, Guwahati, Assam 781022",
+            stars: "4.1",
+            description: "An elegant and stylish property by Taj, featuring a spa, multiple dining options, and a relaxing ambiance.",
+            images: [
+                "https://cf.bstatic.com/xdata/images/hotel/max1024x768/568247501.jpg?k=c23fcdba270da275d5596518ca6f546dd2945a596800f4cdc2a76cbb847f0fe5&o=&hp=1",
+                "https://thelilyhotel.com/wp-content/uploads/2018/11/Home-Banquethall-Pic.jpg",
+                "https://thelilyhotel.com/wp-content/uploads/2018/09/rooms3.jpg"
+            ]
+},  
+        {
+             id: "hotel10",
+            name: "Hotel Rajmahal",
+            location: "Assam Trunk Rd, Guwahati, Assam 781001",
+            stars: "4.1",
+            description: "An elegant and stylish property by Taj, featuring a spa, multiple dining options, and a relaxing ambiance.",
+            images: [
+                "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/06/32/56/bb/hotel-rajmahal.jpg?w=700&h=-1&s=1",
+                "https://cdn0.weddingwire.in/vendor/7679/3_2/960/jpg/21_15_147679.webp",
+                "https://q-xx.bstatic.com/xdata/images/hotel/max1024/318457506.jpg?k=ded677763caf010d046be0b4a48fa6aaabb315c7c914927ef8513b915d5f694b&o="
+             ]
+},  
+        {
+            id: "hotel11",
+            name: "Hotel Lilawati Grand",
+            location: "5PMV+WR5, Motilal Nehru Rd, near Fancy Bazaar, Pan Bazaar, Guwahati, Assam 781001",
+            stars: "3.5",
+            description: "An elegant and stylish property by Taj, featuring a spa, multiple dining options, and a relaxing ambiance.",
+            images: [
+                "https://imgcld.yatra.com/ytimages/image/upload/t_seo_Hotel_w_930_h_550_c_fill_g_auto_q_40_f_jpg/v1556697143/Hotel/00010298/DSC09695_k0m1KB.jpg",
+                "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/16/4d/54/85/hotel-lilawati-grand.jpg?w=700&h=-1&s=1",
+                "https://r2imghtlak.mmtcdn.com/r2-mmt-htl-image/room-imgs/201208071137393592-271921-9d333f5e70f711e6a24e5ee5da2daa2a.jpg"
+            ]
+},  
+        {
+            id: "hotel12",
+            name: "The Greenwood Guwahati",
+            location: "Dr. Bhabendra Nath Saikia Road Beltola Basistha Khanapara, Road, Beltola Tiniali, Assam 781028",
+            stars: "4.5",
+            description: "An elegant and stylish property by Taj, featuring a spa, multiple dining options, and a relaxing ambiance.",
+            images: [
+                "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/27/47/81/68/the-greenwood-guwahati.jpg?w=700&h=-1&s=1",
+                "https://r2imghtlak.mmtcdn.com/r2-mmt-htl-image/htl-imgs/202211291740109380-b512c10a6fe511edae060a58a9feac02.jpg",
+                "https://r2imghtlak.mmtcdn.com/r2-mmt-htl-image/htl-imgs/202211291740109380-618b0a746fe511ed99030a58a9feac02.jpg"
+            ]
+},  
+        {
+             id: "hotel13",
+            name: "Ratnamouli Palace",
+            location: "4Q7X+GFH, Dr Bhabendra Nath Saikia Rd, Beltola Chariali, Basistha Chariali, Beltola Tiniali, Guwahati, Assam 781028",
+            stars: "4.5",
+            description: "An elegant and stylish property by Taj, featuring a spa, multiple dining options, and a relaxing ambiance.",
+            images: [
+                "https://r2imghtlak.mmtcdn.com/r2-mmt-htl-image/htl-imgs/202211040002461857-7edca2ba89b911ee95e60a58a9feac02.jpg",
+                "https://cf.bstatic.com/xdata/images/hotel/max1024x768/438605556.jpg?k=a6450765811f397a911d38c5df13143fb56a904b025c084b16629a276f66b7a0&o=&hp=1",
+                "https://r2imghtlak.mmtcdn.com/r2-mmt-htl-image/room-imgs/202211040002461857-4625-bb1f797e89b811ee85ed0a58a9feac02.jpg"
+            ]
+},  
+        {
+             id: "hotel14",
+            name: "Hotel Royal Heritage",
+            location: "N.H.37, Betkuchi, AHOM GAON, Guwahati, Assam 781035",
+            stars: "3.7",
+            description: "An elegant and stylish property by Taj, featuring a spa, multiple dining options, and a relaxing ambiance.",
+            images: [
+                "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/08/5f/1c/17/getlstd-property-photo.jpg?w=600&h=-1&s=1",
+                "https://image.wedmegood.com/resized/720X/uploads/member/705994/1568280960_Screenshot_5.png",
+                "https://r1imghtlak.mmtcdn.com/38f81b406f0711e782c6025f77df004f.jpg"
+            ]
+},  
+        {
+             id: "hotel15",
+            name: "The Upper Homes",
+            location: "House no 2, Mother teresa road, Geetanagar, Auditek, bylane, Guwahati, Assam 781020",
+            stars: "4.2",
+            description: "An elegant and stylish property by Taj, featuring a spa, multiple dining options, and a relaxing ambiance.",
+            images: [
+                "https://r1imghtlak.mmtcdn.com/d6447e3a22cf11eda2430a58a9feac02.jpg",
+                "https://cf.bstatic.com/xdata/images/hotel/max1024x768/348902752.jpg?k=5080530496337df893e1b0d8508047da3d2dccb6aa71e079fcfcd8ff9d93444e&o=&hp=1https://cf.bstatic.com/xdata/images/hotel/max1024x768/348902752.jpg?k=5080530496337df893e1b0d8508047da3d2dccb6aa71e079fcfcd8ff9d93444e&o=&hp=1",
+                "https://r2imghtlak.mmtcdn.com/r2-mmt-htl-image/htl-imgs/202207311747027711-ea360be010c611ed9bd30a58a9feac02.jpg",
+             ]
+},  
+        {
+             id: "hotel16",
+            name: "Gians Haven",
+            location: " Don Bosco Institute of Management, 5QWG+XM2, Ramchai Hills, Krishna Nagar, Bamunimaidan",
+            stars: "4.6", price: 4000,
+            description: "An elegant and stylish property by Taj, featuring a spa, multiple dining options, and a relaxing ambiance.",
+            images: [
+                "https://q-xx.bstatic.com/xdata/images/hotel/max500/417213430.jpg?k=cb3bdb84f4a658b07d7280ebed6c50766e96ca58c7af66601c08d147f60ea775&o=",
+                "https://q-xx.bstatic.com/xdata/images/hotel/max500/417213555.jpg?k=6292e0c96f572eeb8dc7eaf506a9945cda0eb2f110cfd182edcfae6fc2207d6c&o=",
+                "https://r2imghtlak.mmtcdn.com/r2-mmt-htl-image/htl-imgs/202207311747027711-ea360be010c611ed9bd30a58a9feac02.jpg",
+            ]
+},  
+        {
+             id: "hotel17",
+            name: "Hotel Essence Grandeur",
+            location: "OPPLUTUMAL.P.SCHOOL, Ganapati Nagar, 4THBATALLIONGATERD, Lal Ganesh, Guwahati, Assam 781018",
+            stars: "4.8", price: 3434,
+            description: "An elegant and stylish property by Taj, featuring a spa, multiple dining options, and a relaxing ambiance.",
+            images: [
+                "https://cf.bstatic.com/xdata/images/hotel/max1024x768/538382921.jpg?k=02597ff3ebd1a376206778dc471b23e76fb034a276a2325ec19f5ec8fcfb2ac1&o=&hp=1",
+                "https://images.trvl-media.com/lodging/103000000/102030000/102028200/102028164/38d3f38d.jpg?impolicy=resizecrop&rw=575&rh=575&ra=fill",
+                "https://images.trvl-media.com/lodging/12000000/11850000/11842900/11842823/0ef47f87.jpg?impolicy=resizecrop&rw=575&rh=575&ra=fill",
+            ]
+},  
+        {
+             id: "hotel18",
+            name: "Hotel Green Valley",
+            location: "Dr B Baruah Rd, near Nehru Stadium, opposite B.Baruah College, Ulubari, Guwahati, Assam 781007",
+            stars: "3.4", price: 1696,
+            description: "An elegant and stylish property by Taj, featuring a spa, multiple dining options, and a relaxing ambiance.",
+            images: [
+                "https://r2imghtlak.mmtcdn.com/r2-mmt-htl-image/flyfish/raw/NH27091373688056/QS1042/QS1042-Q1/1000152359.jpg",
+                "https://c.otcdn.com/imglib/hotelfotos/8/3111/hotel-green-valley-by-oyo-rooms-guwahati-20231010065529409000.jpg",
+                "https://cf.bstatic.com/xdata/images/hotel/max1024x768/605379872.jpg?k=28073f2921a4703b7b39fc2a1ce9bec50a67e8227b44fb3b12bfb7caed42f137&o=&hp=1",
+            ]
+},  
+        {
+             id: "hotel19",
+            name: "Hotel Gangotri",
+            location: "GS Rd, near GNRC Hospital, Six Mile, Guwahati, Assam 781022",
+            stars: "3.8", price: 1829,
+            description: "An elegant and stylish property by Taj, featuring a spa, multiple dining options, and a relaxing ambiance.",
+            images: [
+                "https://r1imghtlak.ibcdn.com/a105cf52425911ef80ab0a58a9feac02.jpg?&downsize=400:200&crop=400:200;0,2&output-format=webp",
+                "https://imgcy.trivago.com/c_fill,d_dummy.jpeg,e_sharpen:60,f_auto,h_267,q_40,w_400/hotelier-images/ea/a2/fbf94c843b2871d9bed1db9f16ef3d6eeac22755baaa158f54c28a409364.jpeg",
+                "https://images.jdmagicbox.com/comp/guwahati/e2/9999px361.x361.190215140130.y7e2/catalogue/oyo-14995-hotel-starline-paltan-bazar-guwahati-hotels-5yfe16ob1y.jpg",
+            ]
+},  
+        {
+             id: "hotel20",
+            name: "Hotel ROYALE de CASA",
+            location: "Beltola - Basistha Rd, Wireless, Rani Bagan, Guwahati, Assam 781028",
+            stars: "4.2", price: 5040,
+            description: "An elegant and stylish property by Taj, featuring a spa, multiple dining options, and a relaxing ambiance.",
+            images: [
+                "https://www.overlandescape.com/storage/accommodations/5cd3f476342cb117_asa_(5).jpg",
+                "https://q-xx.bstatic.com/xdata/images/hotel/max500/77147389.jpg?k=da74af0b5a238977b9ee3ada83acf66b92859747d9362373c2a309b72227f1fa&o=",
+                "https://www.royaledecasaresortkaziranga.com/Premier%20Suite/3.jpg",
+            ]
+
+},  
+        {
+             id: "hotel21",
+            name: "Kiranshree Grand",
+            location: "4J62+XM5, New Airport Rd, Mirzapur, Ganakpara, Guwahati, Mirzapur, Assam 781017",
+            stars: "4.5", price: 8000,
+            description: "An elegant and stylish property by Taj, featuring a spa, multiple dining options, and a relaxing ambiance.",
+            images: [
+               "https://cf.bstatic.com/xdata/images/hotel/max1024x768/123896702.jpg?k=82380c928ead80992603b8c13a33fc7b6ca690ebb5abf8b4de073d12ebd70149&o=&hp=1",
+               "https://res.cloudinary.com/simplotel/image/upload/w_5000,h_3333/x_0,y_333,w_5000,h_2813,r_0/q_80,w_900,h_506,dpr_1,f_auto,fl_progressive,c_limit/kiranshree-grand-hotel/_DSC4659",
+"https://cf.bstatic.com/xdata/images/hotel/max1024x768/150142250.jpg?k=3aa55ed3932fa6832b2887e033f4d168d925a9f8ca212b1cf9143d29edfc5782&o=&hp=1",
+            ]
+},  
+        {
+             id: "hotel22",
+            name: "Hotel Bluemoon",
+            location: "62, Bhuban Rd, opposite ICICI Bank, Latasil, Uzan Bazar, Branch, Guwahati, Assam 781001",
+            stars: "4.3", price: 1248,
+            description: "An elegant and stylish property by Taj, featuring a spa, multiple dining options, and a relaxing ambiance.",
+            images: [
+               "https://image.wedmegood.com/resized/720X/uploads/member/2311103/1632112957_Screenshot_from_2021_09_20_10_10_34.png",
+"https://r2imghtlak.mmtcdn.com/r2-mmt-htl-image/htl-imgs/201109151017229003-5de7e992299011ecb5d50a58a9feac02.jpg",  
+"https://cf.bstatic.com/xdata/images/hotel/max1024x768/500109821.jpg?k=429852b8e12344aa58f460fdc34202ccfc0ff0dc7d8a3d9ddc46a893552fce41&o=&hp=1",  
+    ]
+},  
+        {
+             id: "hotel23",
+            name: "Hotel Amrit Regency",
+            location: "5QG4+M5X, G S Road, Near, Bishnu Ram Medhi Flyover, Manipuri Rajbari, Ulubari, Guwahati, Assam 781007",
+            stars: "3.9", price: 2503,
+            description: "An elegant and stylish property by Taj, featuring a spa, multiple dining options, and a relaxing ambiance.",
+            images: [
+               "https://r1imghtlak.mmtcdn.com/32c8e1aef69411e7bb02025f77df004f.jpg",
+"https://cf.bstatic.com/xdata/images/hotel/max1024x768/146006857.jpg?k=584bde1b47432fda37994591980438576427f1574bd96ae04ae8d54e3fcde2aa&o=&hp=1",
+"https://q-xx.bstatic.com/xdata/images/hotel/max1024/146006862.jpg?k=7cfe9378bc57c409407c7549a79d0277b19a7cf1318ac8b5d662ae70346f6183&o=",
+    ]
+},  
+        {
+             id: "hotel24",
+            name: "Hotel The Kalyaniz",
+            location: " Hengrabari Rd, GMC Ward Number 44, Swaraj Nagar, Nayanpur, Guwahati, Assam 781006",
+            stars: "4.1", price: 3834,
+            description: "An elegant and stylish property by Taj, featuring a spa, multiple dining options, and a relaxing ambiance.",
+            images: [
+              "https://content.jdmagicbox.com/comp/guwahati/c8/9999px361.x361.171120112807.t6c8/catalogue/hotel-the-kalyaniz-dispur-guwahati-hotels-0e1bdf79ct.jpg",
+"https://cf.bstatic.com/xdata/images/hotel/max1024x768/287877045.jpg?k=3ef93313c060312a00af647a3825af1c930e02af612deb0c4c5216c5c42bc789&o=&hp=1",
+"https://q-xx.bstatic.com/xdata/images/hotel/max500/292137744.jpg?k=beb3a064bc5d767220a911b2e770886c8322be904a9d46e8499a78995b03fb90&o=",
+    ]
+},
+
+   ];
+
+    function generateHotels() {
+        let container = document.getElementById("hotelList");
+        container.innerHTML = "";
+        hotels.forEach(hotel => {
+            let card = document.createElement("div");
+            card.className = "hotel-card";
+            card.dataset.name = hotel.name.toLowerCase();
+            card.innerHTML = `
+                <img src="${hotel.images[0]}" alt="${hotel.name}">
+                <h3>${hotel.name}</h3>
+                <p>Location: ${hotel.location}</p>
+                <p>Rating: ${hotel.stars} ★</p>
+                <p>Price: ₹${hotel.price}</p>
+                <button onclick="openModal('${hotel.id}')">View Details</button>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    let currentHotel = null;
+    let currentSlide = 0;
+
+    function openModal(hotelId) {
+        currentHotel = hotels.find(h => h.id === hotelId);
+        currentSlide = 0;
+
+        if (currentHotel) {
+            document.getElementById("modal-title").innerText = currentHotel.name;
+            document.getElementById("modal-location").innerText = "Location: " + currentHotel.location;
+            document.getElementById("modal-stars").innerText = "Star Rating: " + currentHotel.stars + " ★";
+            document.getElementById("modal-price").innerText = "Price: ₹" + currentHotel.price;
+            updateSlide();
+
+            document.getElementById("modal").style.display = "flex";
+        }
+    }
+
+    function closeModal() {
+        document.getElementById("modal").style.display = "none";
+    }
+
+    function changeSlide(direction) {
+        if (currentHotel && currentHotel.images.length > 1) {
+            currentSlide = (currentSlide + direction + currentHotel.images.length) % currentHotel.images.length;
+            updateSlide();
+        }
+    }
+
+    function updateSlide() {
+        if (currentHotel) {
+            document.getElementById("modal-image").src = currentHotel.images[currentSlide];
+        }
+    }
+
+    function filterHotels() {
+        let input = document.getElementById("searchBar").value.toLowerCase();
+        document.querySelectorAll('.hotel-card').forEach(hotel => {
+            hotel.style.display = hotel.dataset.name.includes(input) ? 'block' : 'none';
+        });
+    }
+
+    function sortHotels() {
+        let sortOption = document.getElementById("sortOptions").value;
+
+        if (sortOption === "ratingAsc") hotels.sort((a, b) => a.stars - b.stars);
+        else if (sortOption === "ratingDesc") hotels.sort((a, b) => b.stars - a.stars);
+        else if (sortOption === "priceAsc") hotels.sort((a, b) => a.price - b.price);
+        else if (sortOption === "priceDesc") hotels.sort((a, b) => b.price - a.price);
+
+        generateHotels();
+    }
+
+    window.onload = generateHotels;
+</script>
+
+</body>
+</html>
